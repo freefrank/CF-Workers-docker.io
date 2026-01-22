@@ -494,6 +494,17 @@ export default {
 			console.log(`handle_url: ${url}`);
 		}
 
+	// 调试端点：检查认证配置
+		if (url.pathname === '/debug/auth') {
+			const hasAuth = !!(env.DOCKER_USERNAME && env.DOCKER_PASSWORD);
+			return new Response(JSON.stringify({
+				authenticated: hasAuth,
+				username: env.DOCKER_USERNAME ? env.DOCKER_USERNAME.substring(0, 3) + '***' : null
+			}), {
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
 	// 处理token请求
 		if (url.pathname.includes('/token')) {
 			let token_parameter = {
