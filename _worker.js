@@ -494,7 +494,7 @@ export default {
 			console.log(`handle_url: ${url}`);
 		}
 
-		// 处理token请求
+	// 处理token请求
 		if (url.pathname.includes('/token')) {
 			let token_parameter = {
 				headers: {
@@ -507,6 +507,11 @@ export default {
 					'Cache-Control': 'max-age=0'
 				}
 			};
+			// 添加 Docker Hub 认证
+			if (env.DOCKER_USERNAME && env.DOCKER_PASSWORD) {
+				const auth = btoa(`${env.DOCKER_USERNAME}:${env.DOCKER_PASSWORD}`);
+				token_parameter.headers['Authorization'] = `Basic ${auth}`;
+			}
 			let token_url = auth_url + url.pathname + url.search;
 			return fetch(new Request(token_url, request), token_parameter);
 		}
@@ -534,18 +539,22 @@ export default {
 			if (v2Match) {
 				repo = v2Match[1];
 			}
-			if (repo) {
+		if (repo) {
 				const tokenUrl = `${auth_url}/token?service=registry.docker.io&scope=repository:${repo}:pull`;
-				const tokenRes = await fetch(tokenUrl, {
-					headers: {
-						'User-Agent': getReqHeader("User-Agent"),
-						'Accept': getReqHeader("Accept"),
-						'Accept-Language': getReqHeader("Accept-Language"),
-						'Accept-Encoding': getReqHeader("Accept-Encoding"),
-						'Connection': 'keep-alive',
-						'Cache-Control': 'max-age=0'
-					}
-				});
+				const tokenHeaders = {
+					'User-Agent': getReqHeader("User-Agent"),
+					'Accept': getReqHeader("Accept"),
+					'Accept-Language': getReqHeader("Accept-Language"),
+					'Accept-Encoding': getReqHeader("Accept-Encoding"),
+					'Connection': 'keep-alive',
+					'Cache-Control': 'max-age=0'
+				};
+				// 添加 Docker Hub 认证
+				if (env.DOCKER_USERNAME && env.DOCKER_PASSWORD) {
+					const auth = btoa(`${env.DOCKER_USERNAME}:${env.DOCKER_PASSWORD}`);
+					tokenHeaders['Authorization'] = `Basic ${auth}`;
+				}
+				const tokenRes = await fetch(tokenUrl, { headers: tokenHeaders });
 				const tokenData = await tokenRes.json();
 				const token = tokenData.token;
 				let parameter = {
